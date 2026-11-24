@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VORA — Recordatorios Inteligentes</title>
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --surface: rgba(20, 27, 41, 0.85);
+      --surface-2: rgba(30, 41, 62, 0.8);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f3f6fb;
+      --muted: #9aa7bd;
+      --accent: #38bdf8;
+      --accent-2: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #132038 0%, var(--bg) 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 14px 48px;
+    }
+
+    .app {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1 {
+      font-size: 1.5rem;
+      letter-spacing: 0.04em;
+    }
+
+    .brand p {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-top: 2px;
+    }
+
+    .clock-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.88rem;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .banner {
+      display: none;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      background: rgba(245, 158, 11, 0.14);
+      color: #fde68a;
+      font-size: 0.92rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .banner.show {
+      display: flex;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      backdrop-filter: blur(12px);
+      margin-bottom: 18px;
+    }
+
+    .prompt-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .input-wrap {
+      position: relative;
+      flex: 1;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.96rem;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    .mic-btn {
+      width: 50px;
+      min-width: 50px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .mic-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .mic-btn:active {
+      transform: scale(0.96);
+    }
+
+    .mic-btn.listening {
+      background: rgba(239, 68, 68, 0.22);
+      border-color: var(--danger);
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+    }
+
+    .status-line {
+      margin-top: 8px;
+      min-height: 20px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .status-line.error {
+      color: #fca5a5;
+    }
+
+    .parsed-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .parsed-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      font-size: 0.76rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.12);
+      color: #7dd3fc;
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #06101c;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      padding: 11px 18px;
+      font-size: 0.94rem;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.92;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .btn-ghost:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .list-header h2 {
+      font-size: 1.08rem;
+    }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-btn {
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 13px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .task-item.due {
+      border-color: rgba(245, 158, 11, 0.55);
+      background: rgba(245, 158, 11, 0.08);
+    }
+
+    .task-item.done {
+      opacity: 0.6;
+    }
+
+    .task-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .task-check {
+      margin-top: 3px;
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-2);
+      cursor: pointer;
+    }
+
+    .task-title {
+      font-weight: 600;
+      font-size: 0.96rem;
+      word-break: break-word;
+    }
+
+    .task-item.done .task-title {
+      text-decoration: line-through;
+    }
+
+    .task-meta {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+
+    .badge-due {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+    }
+
+    .badge-upcoming {
+      background: rgba(56, 189, 248, 0.16);
+      color: #7dd3fc;
+    }
+
+    .badge-done {
+      background: rgba(34, 197, 94, 0.18);
+      color: #86efac;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 9px;
+      padding: 6px 9px;
+      cursor: pointer;
+      font-size: 0.84rem;
+    }
+
+    .icon-btn:hover {
+      color: var(--text);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .icon-btn.del:hover {
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .empty {
+      text-align: center;
+      padding: 28px 14px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <h1>VORA</h1>
+        <p>Escribe o habla: detecta nombre, día y hora automáticamente</p>
+      </div>
+      <div class="clock-pill" id="liveClock">--:--</div>
+    </header>
+
+    <div class="banner" id="dueBanner">
+      <span id="dueBannerText">Tienes recordatorios pendientes.</span>
+      <button class="btn-ghost" type="button" id="dismissBannerBtn">Entendido</button>
+    </div>
+
+    <section class="card">
+      <div class="prompt-row">
+        <div class="input-wrap">
+          <input
+            type="text"
+            id="smartInput"
+            placeholder='Ej: "Entregar informe mañana a las 16:30" o "Pagar luz el viernes a las 9 am"'
+            autocomplete="off"
+          />
+        </div>
+        <button
+          type="button"
+          class="mic-btn"
+          id="micBtn"
+          title="Hablar para crear recordatorio"
+          aria-label="Activar micrófono"
+        >
+          🎤
+        </button>
+      </div>
+
+      <div class="status-line" id="statusLine">Escribe o pulsa 🎤 para dictar tu recordatorio.</div>
+
+      <div class="parsed-grid">
+        <div class="field">
+          <label for="taskName">Nombre / Recordatorio</label>
+          <input type="text" id="taskName" placeholder="Ej. Revisar código" />
+        </div>
+        <div class="field">
+          <label for="taskDate">Día</label>
+          <input type="date" id="taskDate" />
+        </div>
+        <div class="field">
+          <label for="taskTime">Hora</label>
+          <input type="time" id="taskTime" />
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <div class="chips">
+          <button type="button" class="chip" data-sample="Estudiar límites hoy a las 20:00">Hoy 20:00</button>
+          <button type="button" class="chip" data-sample="Comprar insumos mañana a las 09:30">Mañana 09:30</button>
+          <button type="button" class="chip" data-sample="Reunión de equipo el viernes a las 15:00">Viernes 15:00</button>
+        </div>
+        <button type="button" class="btn-primary" id="saveBtn">Guardar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="list-header">
+        <h2>Tus recordatorios</h2>
+        <div class="filters">
+          <button type="button" class="filter-btn active" data-filter="all">Todos</button>
+          <button type="button" class="filter-btn" data-filter="pending">Pendientes</button>
+          <button type="button" class="filter-btn" data-filter="done">Hechos</button>
+        </div>
+      </div>
+      <div class="task-list" id="taskList"></div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "vora_clean_tasks_v1";
+
+    const state = {
+      tasks: loadTasks(),
+      filter: "all",
+      notifiedIds: new Set(),
+      isListening: false,
+      recognition: null
+    };
+
+    const els = {
+      liveClock: document.getElementById("liveClock"),
+      dueBanner: document.getElementById("dueBanner"),
+      dueBannerText: document.getElementById("dueBannerText"),
+      dismissBannerBtn: document.getElementById("dismissBannerBtn"),
+      smartInput: document.getElementById("smartInput"),
+      micBtn: document.getElementById("micBtn"),
+      statusLine: document.getElementById("statusLine"),
+      taskName: document.getElementById("taskName"),
+      taskDate: document.getElementById("taskDate"),
+      taskTime: document.getElementById("taskTime"),
+      saveBtn: document.getElementById("saveBtn"),
+      taskList: document.getElementById("taskList"),
+      filterBtns: document.querySelectorAll(".filter-btn"),
+      chips: document.querySelectorAll(".chip")
+    };
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatLocalDate(dateObj) {
+      return `${dateObj.getFullYear()}-${pad2(dateObj.getMonth() + 1)}-${pad2(dateObj.getDate())}`;
+    }
+
+    function formatLocalTime(dateObj) {
+      return `${pad2(dateObj.getHours())}:${pad2(dateObj.getMinutes())}`;
+    }
+
+    function loadTasks() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function persistTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+      } catch {
+        setStatus("No se pudo guardar en el almacenamiento local del navegador.", true);
+      }
+    }
+
+    function setStatus(msg, isError = false) {
+      els.statusLine.textContent = msg;
+      els.statusLine.classList.toggle("error", Boolean(isError));
+    }
+
+    /**
+     * Analiza texto natural en español para extraer:
+     * - name: nombre o título de la tarea
+     * - date: YYYY-MM-DD
+     * - time: HH:MM
+     */
+    function parseNaturalReminder(rawText, referenceDate = new Date()) {
+      let text = String(rawText || "").trim();
+      const defaultDate = formatLocalDate(referenceDate);
+      const defaultTime = formatLocalTime(new Date(referenceDate.getTime() + 60 * 60 * 1000));
+
+      if (!text) {
+        return { name: "", date: defaultDate, time: defaultTime, matched: false };
+      }
+
+      let detectedDate = null;
+      let detectedTime = null;
+      let working = text;
+      let matchedAny = false;
+
+      // 1. Detectar hora (ej: "16:30", "4:15 pm", "9 de la mañana", "8 de la noche", "a las 10", "las 14")
+      const timePatterns = [
+        // 24h o con am/pm: "a las 16:30", "16:30 hrs", "4:30 pm", "04:00 am"
+        {
+          regex: /\b(?:a\s+las\s+|las\s+|a\s+la\s+)?(\d{1,2}):(\d{2})\s*(?:h|hrs|horas|am|pm|a\.m\.|p\.m\.)?\b/i,
+          extract: (m) => {
+            let h = parseInt(m[1], 10);
+            const min = parseInt(m[2], 10);
+            const suffix = (m[0] || "").toLowerCase();
+            if (h > 23 || min > 59) return null;
+            if (/p\.?m\.?/.test(suffix) && h < 12) h += 12;
+            if (/a\.?m\.?/.test(suffix) && h === 12) h = 0;
+            return `${pad2(h)}:${pad2(min)}`;
+          }
+        },
+        // Expresiones habladas: "a las 8 de la noche", "9 de la mañana", "3 de la tarde", "12 del mediodía"
+        {
+          regex: /\b(?:a\s+las\s+|las\s+)?(\d{1,2})\s*(?:de\s+la\s+|de\s+madrugada\s*|del\s+)(mañana|tarde|noche|madrugada|mediodía)\b/i,
+          extract: (m) => {
+            let h = parseInt(m[1], 10);
+            const period = (m[2] || "").toLowerCase();
+            if (h < 1 || h > 12) return null;
+            if ((period === "tarde" || period === "noche") && h < 12) h += 12;
+            if (period === "madrugada" && h === 12) h = 0;
+            return `${pad2(h)}:00`;
+          }
+        },
+        // Hora sin minutos precedida por "a las" o "las": "a las 18", "las 9 am", "a las 5 pm"
+        {
+          regex: /\b(?:a\s+las\s+|las\s+)(\d{1,2})\s*(am|pm|a\.m\.|p\.m\.|h|hrs|horas)?\b/i,
+          extract: (m) => {
+            let h = parseInt(m[1], 10);
+            const suffix = (m[2] || "").toLowerCase();
+            if (h > 23) return null;
+            if (/p\.?m\.?/.test(suffix) && h < 12) h += 12;
+            if (/a\.?m\.?/.test(suffix) && h === 12) h = 0;
+            return `${pad2(h)}:00`;
+          }
+        }
+      ];
+
+      for (const p of timePatterns) {
+        const match = working.match(p.regex);
+        if (match) {
+          const timeVal = p.extract(match);
+          if (timeVal) {
+            detectedTime = timeVal;
+            matchedAny = true;
+            working = working.replace(match[0], " ");
+            break;
+          }
+        }
+      }
+
+      // 2. Detectar día / fecha
+      const base = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+
+      // Fecha numérica DD/MM o DD-MM o DD/MM/YYYY
+      const numericDateMatch = working.match(/\b(?:el\s+)?(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+      if (numericDateMatch) {
+        const day = parseInt(numericDateMatch[1], 10);
+        const month = parseInt(numericDateMatch[2], 10) - 1;
+        let year = numericDateMatch[3] ? parseInt(numericDateMatch[3], 10) : base.getFullYear();
+        if (year < 100) year += 2000;
+        const candidate = new Date(year, month, day);
+        if (
+          candidate.getFullYear() === year &&
+          candidate.getMonth() === month &&
+          candidate.getDate() === day
+        ) {
+          if (!numericDateMatch[3] && candidate < base) {
+            candidate.setFullYear(year + 1);
+          }
+          detectedDate = formatLocalDate(candidate);
+          matchedAny = true;
+          working = working.replace(numericDateMatch[0], " ");
+        }
+      }
+
+      // Relativos: "pasado mañana", "mañana", "hoy"
+      if (!detectedDate) {
+        if (/\bpasado\s+mañana\b/i.test(working)) {
+          const d = new Date(base);
+          d.setDate(d.getDate() + 2);
+          detectedDate = formatLocalDate(d);
+          matchedAny = true;
+          working = working.replace(/\b(?:el\s+)?pasado\s+mañana\b/gi, " ");
+        } else if (/\bmañana\b/i.test(working)) {
+          const d = new Date(base);
+          d.setDate(d.getDate() + 1);
+          detectedDate = formatLocalDate(d);
+          matchedAny = true;
+          working = working.replace(/\b(?:el\s+)?mañana\b/gi, " ");
+        } else if (/\bhoy\b/i.test(working)) {
+          detectedDate = formatLocalDate(base);
+          matchedAny = true;
+          working = working.replace(/\b(?:el\s+)?hoy\b/gi, " ");
+        }
+      }
+
+      // Días de la semana en español (con o sin tilde)
+      if (!detectedDate) {
+        const weekdayMap = {
+          domingo: 0,
+          lunes: 1,
+          martes: 2,
+          miercoles: 3,
+          miércoles: 3,
+          jueves: 4,
+          viernes: 5,
+          sabado: 6,
+          sábado: 6
+        };
+        const dayMatch = working.match(/\b(?:el\s+(?:próximo\s+|proximo\s+)?|este\s+|el\s+)?(lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)\b/i);
+        if (dayMatch) {
+          const targetDow = weekdayMap[dayMatch[1].toLowerCase()];
+          const currentDow = base.getDay();
+          let diff = (targetDow - currentDow + 7) % 7;
+          if (diff === 0) diff = 7;
+          const d = new Date(base);
+          d.setDate(d.getDate() + diff);
+          detectedDate = formatLocalDate(d);
+          matchedAny = true;
+          working = working.replace(dayMatch[0], " ");
+        }
+      }
+
+      // Limpiar conectores sobrantes y espacios múltiples para obtener el nombre
+      let cleanName = working
+        .replace(/\b(?:recordarme|recordar|avísame|avisame|poner\s+recordatorio\s+de|para\s+el|para\s+la|para|el|la|en)\b/gi, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (cleanName) {
+        cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+      } else {
+        cleanName = text.charAt(0).toUpperCase() + text.slice(1);
+      }
+
+      return {
+        name: cleanName,
+        date: detectedDate || defaultDate,
+        time: detectedTime || defaultTime,
+        matched: matchedAny
+      };
+    }
+
+    function applyParsedFromInput() {
+      const parsed = parseNaturalReminder(els.smartInput.value);
+      if (!els.smartInput.value.trim()) {
+        setStatus("Escribe o pulsa 🎤 para dictar tu recordatorio.");
+        return;
+      }
+      els.taskName.value = parsed.name;
+      els.taskDate.value = parsed.date;
+      els.taskTime.value = parsed.time;
+
+      if (parsed.matched) {
+        setStatus(`Detectado: "${parsed.name}" · ${parsed.date} a las ${parsed.time}`);
+      } else {
+        setStatus("Nombre listo. Ajusta el día y la hora si lo necesitas.");
+      }
+    }
+
+    function addTask() {
+      const name = els.taskName.value.trim() || els.smartInput.value.trim();
+      const date = els.taskDate.value || formatLocalDate(new Date());
+      const time = els.taskTime.value || "09:00";
+
+      if (!name) {
+        setStatus("Escribe o dicta un nombre para el recordatorio.", true);
+        els.taskName.focus();
+        return;
+      }
+
+      const newTask = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        name,
+        date,
+        time,
+        done: false,
+        createdAt: Date.now()
+      };
+
+      state.tasks.unshift(newTask);
+      persistTasks();
+      renderTasks();
+      checkDueReminders(true);
+
+      els.smartInput.value = "";
+      els.taskName.value = "";
+      initDefaultDateTime();
+      setStatus(`Guardado: "${name}" para ${date} a las ${time}.`);
+    }
+
+    function toggleTaskDone(id) {
+      const target = state.tasks.find((t) => t.id === id);
+      if (!target) return;
+      target.done = !target.done;
+      persistTasks();
+      renderTasks();
+      checkDueReminders(false);
+    }
+
+    function editTask(id) {
+      const target = state.tasks.find((t) => t.id === id);
+      if (!target) return;
+      els.taskName.value = target.name;
+      els.taskDate.value = target.date;
+      els.taskTime.value = target.time;
+      els.smartInput.value = target.name;
+      state.tasks = state.tasks.filter((t) => t.id !== id);
+      persistTasks();
+      renderTasks();
+      setStatus("Editando recordatorio: ajusta y pulsa Guardar.");
+      els.taskName.focus();
+    }
+
+    function deleteTask(id) {
+      state.tasks = state.tasks.filter((t) => t.id !== id);
+      state.notifiedIds.delete(id);
+      persistTasks();
+      renderTasks();
+      checkDueReminders(false);
+    }
+
+    function isTaskDue(task, now = new Date()) {
+      if (task.done) return false;
+      const [y, m, d] = (task.date || "").split("-").map(Number);
+      const [hh, mm] = (task.time || "00:00").split(":").map(Number);
+      if (!y || !m || !d) return false;
+      const scheduled = new Date(y, m - 1, d, hh || 0, mm || 0, 0, 0);
+      return scheduled <= now;
+    }
+
+    function playGentleBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 660;
+        gain.gain.value = 0.06;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          ctx.close().catch(() => {});
+        }, 180);
+      } catch {
+        // Ignorar si el navegador bloquea audio sin gesto previo
+      }
+    }
+
+    function checkDueReminders(withSound = false) {
+      const now = new Date();
+      const dueTasks = state.tasks.filter((t) => isTaskDue(t, now));
+
+      if (dueTasks.length === 0) {
+        els.dueBanner.classList.remove("show");
+        return;
+      }
+
+      const newlyDue = dueTasks.filter((t) => !state.notifiedIds.has(t.id));
+      newlyDue.forEach((t) => state.notifiedIds.add(t.id));
+
+      els.dueBannerText.textContent =
+        dueTasks.length === 1
+          ? `Recordatorio ahora: "${dueTasks[0].name}" (${dueTasks[0].time})`
+          : `Tienes ${dueTasks.length} recordatorios a la hora o vencidos.`;
+      els.dueBanner.classList.add("show");
+
+      if (withSound || newlyDue.length > 0) {
+        playGentleBeep();
+      }
+    }
+
+    function renderTasks() {
+      const now = new Date();
+      const sorted = [...state.tasks].sort((a, b) => {
+        if (a.done !== b.done) return a.done ? 1 : -1;
+        return `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`);
+      });
+
+      const filtered = sorted.filter((t) => {
+        if (state.filter === "pending") return !t.done;
+        if (state.filter === "done") return t.done;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        els.taskList.innerHTML = `<div class="empty">No hay recordatorios en esta vista.</div>`;
+        return;
+      }
+
+      els.taskList.innerHTML = filtered
+        .map((task) => {
+          const due = isTaskDue(task, now);
+          const badge = task.done
+            ? `<span class="badge badge-done">Hecho</span>`
+            : due
+            ? `<span class="badge badge-due">A la hora / Vencido</span>`
+            : `<span class="badge badge-upcoming">Programado</span>`;
+
+          return `
+            <div class="task-item ${task.done ? "done" : ""} ${due ? "due" : ""}">
+              <div class="task-main">
+                <input
+                  type="checkbox"
+                  class="task-check"
+                  data-toggle="${escapeHtml(task.id)}"
+                  ${task.done ? "checked" : ""}
+                  aria-label="Marcar como completado"
+                />
+                <div>
+                  <div class="task-title">${escapeHtml(task.name)}</div>
+                  <div class="task-meta">
+                    <span>📅 ${escapeHtml(task.date)}</span>
+                    <span>🕒 ${escapeHtml(task.time)}</span>
+                    ${badge}
+                  </div>
+                </div>
+              </div>
+              <div class="task-actions">
+                <button type="button" class="icon-btn" data-edit="${escapeHtml(task.id)}" title="Editar">✏️</button>
+                <button type="button" class="icon-btn del" data-del="${escapeHtml(task.id)}" title="Borrar">🗑️</button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function setupMicrophone() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        els.micBtn.title = "Tu navegador no soporta dictado por voz";
+        return;
+      }
+
+      const rec = new SpeechRecognition();
+      rec.lang = "es-ES";
+      rec.interimResults = false;
+      rec.maxAlternatives = 1;
+
+      rec.onstart = () => {
+        state.isListening = true;
+        els.micBtn.classList.add("listening");
+        setStatus("Escuchando... habla claro diciendo qué, qué día y a qué hora.");
+      };
+
+      rec.onresult = (event) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || "";
+        els.smartInput.value = transcript;
+        applyParsedFromInput();
+      };
+
+      rec.onerror = (event) => {
+        const err = event.error || "error";
+        if (err === "not-allowed") {
+          setStatus("Permiso de micrófono denegado. Habilítalo en el navegador.", true);
+        } else if (err === "no-speech") {
+          setStatus("No se detectó voz. Intenta hablar de nuevo.", true);
+        } else {
+          setStatus(`Error de micrófono (${err}).`, true);
+        }
+      };
+
+      rec.onend = () => {
+        state.isListening = false;
+        els.micBtn.classList.remove("listening");
+      };
+
+      state.recognition = rec;
+    }
+
+    function toggleMicrophone() {
+      if (!state.recognition) {
+        setStatus("Este navegador no soporta micrófono por voz. Puedes escribir directo.", true);
+        return;
+      }
+      if (state.isListening) {
+        state.recognition.stop();
+      } else {
+        try {
+          state.recognition.start();
+        } catch {
+          setStatus("Espera un segundo y vuelve a pulsar el micrófono.", true);
+        }
+      }
+    }
+
+    function initDefaultDateTime() {
+      const now = new Date();
+      const plusOneHour = new Date(now.getTime() + 60 * 60 * 1000);
+      els.taskDate.value = formatLocalDate(now);
+      els.taskTime.value = formatLocalTime(plusOneHour);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      els.liveClock.textContent = `${formatLocalDate(now)} · ${formatLocalTime(now)}`;
+    }
+
+    // Eventos
+    els.smartInput.addEventListener("input", applyParsedFromInput);
+    els.smartInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        applyParsedFromInput();
+        addTask();
+      }
+    });
+
+    els.micBtn.addEventListener("click", toggleMicrophone);
+    els.saveBtn.addEventListener("click", addTask);
+    els.dismissBannerBtn.addEventListener("click", () => els.dueBanner.classList.remove("show"));
+
+    els.chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        els.smartInput.value = chip.dataset.sample || "";
+        applyParsedFromInput();
+      });
+    });
+
+    els.filterBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        els.filterBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.filter = btn.dataset.filter || "all";
+        renderTasks();
+      });
+    });
+
+    els.taskList.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const toggleId = target.getAttribute("data-toggle");
+      if (toggleId) return toggleTaskDone(toggleId);
+
+      const editId = target.getAttribute("data-edit");
+      if (editId) return editTask(editId);
+
+      const delId = target.getAttribute("data-del");
+      if (delId) return deleteTask(delId);
+    });
+
+    // Arranque
+    initDefaultDateTime();
+    setupMicrophone();
+    updateClock();
+    renderTasks();
+    checkDueReminders(false);
+
+    setInterval(() => {
+      updateClock();
+      checkDueReminders(false);
+      renderTasks();
+    }, 15000);
+  </script>
+</body>
+</html>
