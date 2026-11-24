@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>VORA — Enfoque Diario</title>
+
+  <!-- Configuración PWA para iOS -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="VORA" />
+  <meta name="theme-color" content="#06070a" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2306070a'/><path d='M28 32 L50 72 L72 32' stroke='%23fbbf24' stroke-width='10' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
+
+  <style>
+    /* ==========================================
+       VORA — PALETA NEGRO + DORADO (DARK / LIGHT)
+       ========================================== */
+    :root {
+      --bg-main: #06070a;
+      --bg-glass: rgba(15, 18, 26, 0.78);
+      --bg-card: rgba(20, 24, 35, 0.72);
+      --border-glass: rgba(251, 191, 36, 0.14);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+
+      --accent: #fbbf24;
+      --accent-strong: #f59e0b;
+      --accent-ink: #090a0f;
+      --accent-glow: rgba(251, 191, 36, 0.22);
+
+      --cat-estudio: #38bdf8;
+      --cat-trabajo: #a855f7;
+      --cat-personal: #10b981;
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.55);
+    }
+
+    [data-theme="light"] {
+      --bg-main: #f8fafc;
+      --bg-glass: rgba(255, 255, 255, 0.82);
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --border-glass: rgba(15, 23, 42, 0.08);
+      --border-subtle: rgba(15, 23, 42, 0.07);
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+
+      --accent: #d97706;
+      --accent-strong: #b45309;
+      --accent-ink: #ffffff;
+      --accent-glow: rgba(217, 119, 6, 0.16);
+      --shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      padding-bottom: 155px;
+      overflow-x: hidden;
+    }
+
+    .ambient-glow {
+      position: fixed;
+      top: -130px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 72%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 1;
+      max-width: 540px;
+      margin: 0 auto;
+    }
+
+    .glass-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--bg-glass);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--border-glass);
+      padding: calc(env(safe-area-inset-top, 16px) + 12px) 18px 14px;
+    }
+
+    .brand-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .brand-title {
+      font-size: 1.55rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--text-primary) 20%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sync-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 99px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+    }
+
+    .sync-pill.synced {
+      color: #10b981;
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .sync-pill.local {
+      color: var(--accent);
+      border-color: var(--border-glass);
+    }
+
+    .date-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: capitalize;
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 1rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 0.15s ease, border-color 0.2s ease;
+    }
+
+    .icon-btn:active { transform: scale(0.92); }
+    .icon-btn.active-alert {
+      border-color: #10b981;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.28);
+    }
+
+    .progress-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .progress-track {
+      height: 6px;
+      background: rgba(148, 163, 184, 0.18);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-strong), var(--accent), #10b981);
+      border-radius: 99px;
+      transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .days-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .days-strip::-webkit-scrollbar { display: none; }
+
+    .day-pill {
+      flex: 0 0 auto;
+      min-width: 58px;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .day-pill.active {
+      background: linear-gradient(145deg, var(--accent), var(--accent-strong));
+      color: var(--accent-ink);
+      border-color: transparent;
+      box-shadow: 0 6px 18px var(--accent-glow);
+    }
+
+    .day-pill .day-name {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      opacity: 0.9;
+    }
+
+    .day-pill .day-num {
+      display: block;
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .timeline-container {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 55px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state span {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .task-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--cat-estudio);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: var(--shadow-soft);
+      transition: all 0.25s ease;
+      animation: slideUp 0.25s ease;
+    }
+
+    .task-card:hover {
+      border-color: var(--border-glass);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-card[data-cat="trabajo"] { border-left-color: var(--cat-trabajo); }
+    .task-card[data-cat="personal"] { border-left-color: var(--cat-personal); }
+
+    .task-card.completed {
+      opacity: 0.48;
+      transform: scale(0.985);
+    }
+
+    .task-card.completed .task-title { text-decoration: line-through; }
+
+    .check-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--text-secondary);
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      transition: all 0.2s ease;
+    }
+
+    .task-card.completed .check-circle {
+      background: #10b981;
+      border-color: #10b981;
+    }
+
+    .task-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-bottom: 3px;
+    }
+
+    .task-time {
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .task-title {
+      font-size: 0.98rem;
+      font-weight: 500;
+      word-wrap: break-word;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .mini-btn {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .mini-btn:active { background: var(--border-glass); }
+
+    /* COMPOSER */
+    .composer-wrapper {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      max-width: 540px;
+      margin: 0 auto;
+      padding: 8px 14px calc(env(safe-area-inset-bottom, 12px) + 10px);
+      background: linear-gradient(to top, var(--bg-main) 78%, transparent);
+    }
+
+    .parse-preview {
+      font-size: 0.75rem;
+      color: var(--accent);
+      padding: 0 6px 5px;
+      min-height: 20px;
+      font-weight: 600;
+    }
+
+    .quick-chips {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .chip, .time-chip {
+      background: var(--bg-glass);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      border-radius: 99px;
+      padding: 5px 11px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .chip.active {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      background: var(--accent-glow);
+    }
+
+    .time-chip {
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .glass-composer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-glass);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      padding: 6px 8px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .glass-composer input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      padding: 8px 4px;
+    }
+
+    .mic-btn, .send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      border: none;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .mic-btn {
+      background: rgba(148, 163, 184, 0.14);
+      color: var(--text-primary);
+    }
+
+    .mic-btn.recording {
+      background: #ef4444;
+      color: #fff;
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    .send-btn {
+      background: linear-gradient(145deg, var(--accent), var(--accent-strong));
+      color: var(--accent-ink);
+      font-weight: 800;
+    }
+
+    /* TOAST DE ALERTA */
+    .alert-toast {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 16px) + 12px);
+      left: 16px;
+      right: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+      z-index: 100;
+      background: rgba(10, 12, 18, 0.96);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--accent);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.65);
+    }
+
+    .alert-toast.hidden { display: none; }
+
+    .alert-badge {
+      background: var(--accent);
+      color: #090a0f;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 99px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .alert-content strong { display: block; font-size: 0.95rem; }
+    .alert-content small { color: #94a3b8; }
+
+    .alert-close {
+      background: rgba(255, 255, 255, 0.14);
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* MODAL DE EDICIÓN */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-backdrop.hidden { display: none; }
+
+    .modal-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-glass);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .modal-card h3 { font-size: 1.05rem; }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field-group label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 0.92rem;
+      outline: none;
+    }
+
+    .modal-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .btn-cancel, .btn-save {
+      padding: 9px 16px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    .btn-cancel {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-save {
+      background: linear-gradient(145deg, var(--accent), var(--accent-strong));
+      color: var(--accent-ink);
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <div class="app-container">
+    <header class="glass-header">
+      <div class="brand-row">
+        <div>
+          <div class="title-group">
+            <h1 class="brand-title">VORA</h1>
+            <span id="syncStatus" class="sync-pill local">📱 Local</span>
+            <span id="alertStatus" class="sync-pill">🔕 Alertas off</span>
+          </div>
+          <p class="date-subtitle" id="currentDateLabel">Cargando fecha...</p>
+        </div>
+        <div class="header-actions">
+          <button id="testAlertBtn" class="icon-btn" title="Probar alerta ahora">⚡</button>
+          <button id="notifPermBtn" class="icon-btn" title="Activar notificaciones">🔔</button>
+          <button id="themeToggleBtn" class="icon-btn" title="Cambiar tema">☀️</button>
+        </div>
+      </div>
+
+      <div class="progress-card">
+        <div class="progress-info">
+          <span id="progressText">0 de 0 completadas</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="days-strip" id="daysStrip"></div>
+    </header>
+
+    <main class="timeline-container" id="timelineContainer"></main>
+  </div>
+
+  <!-- COMPOSER -->
+  <div class="composer-wrapper">
+    <div id="parsePreview" class="parse-preview"></div>
+    <div class="quick-chips">
+      <button type="button" class="chip active" data-cat="estudio">🔵 Estudio</button>
+      <button type="button" class="chip" data-cat="trabajo">🟣 Trabajo</button>
+      <button type="button" class="chip" data-cat="personal">🟢 Personal</button>
+      <input type="time" id="manualTimeInput" class="time-chip" title="Hora opcional" />
+    </div>
+
+    <form id="taskForm" class="glass-composer">
+      <button type="button" id="voiceBtn" class="mic-btn" title="Dictar por voz">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="22"/>
+        </svg>
+      </button>
+
+      <input
+        type="text"
+        id="taskInput"
+        placeholder="Ej: Estudiar cálculo el viernes a las 4 pm..."
+        autocomplete="off"
+        required
+      />
+
+      <button type="submit" class="send-btn" title="Agregar">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <!-- MODAL EDITAR TAREA -->
+  <div id="editModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <h3>Editar tarea</h3>
+      <div class="field-group">
+        <label for="editTitleInput">Nombre de la tarea</label>
+        <input type="text" id="editTitleInput" class="field-input" />
+      </div>
+      <div class="modal-row">
+        <div class="field-group">
+          <label for="editDateInput">Día</label>
+          <input type="date" id="editDateInput" class="field-input" />
+        </div>
+        <div class="field-group">
+          <label for="editTimeInput">Hora</label>
+          <input type="time" id="editTimeInput" class="field-input" />
+        </div>
+      </div>
+      <div class="field-group">
+        <label for="editCatSelect">Categoría</label>
+        <select id="editCatSelect" class="field-input">
+          <option value="estudio">🔵 Estudio</option>
+          <option value="trabajo">🟣 Trabajo</option>
+          <option value="personal">🟢 Personal</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancelEditBtn" class="btn-cancel">Cancelar</button>
+        <button type="button" id="saveEditBtn" class="btn-save">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BANNER DE ALERTA -->
+  <div id="inAppAlert" class="alert-toast hidden">
+    <div class="alert-content">
+      <span id="alertBadge" class="alert-badge">📌 Toca empezar</span>
+      <strong id="alertTaskTitle">Tarea próxima</strong>
+      <small id="alertTaskTime">16:00</small>
+    </div>
+    <button id="closeAlertBtn" class="alert-close">OK</button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'vora_tasks_v1';
+    const THEME_KEY = 'vora_theme_v1';
+
+    function getLocalDateStr(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const d = String(dateObj.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function addDays(dateStr, days) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      dt.setDate(dt.getDate() + days);
+      return getLocalDateStr(dt);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function loadSavedTasks() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr : [];
+      } catch {
+        return [];
+      }
+    }
+
+    let tasks = loadSavedTasks();
+    let selectedDateStr = getLocalDateStr(new Date());
+    let selectedCategory = 'estudio';
+    let editingTaskId = null;
+    const alertedTaskIds = new Set();
+
+    const daysStrip = document.getElementById('daysStrip');
+    const timelineContainer = document.getElementById('timelineContainer');
+    const currentDateLabel = document.getElementById('currentDateLabel');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressFill = document.getElementById('progressFill');
+    const taskForm = document.getElementById('taskForm');
+    const taskInput = document.getElementById('taskInput');
+    const parsePreview = document.getElementById('parsePreview');
+    const manualTimeInput = document.getElementById('manualTimeInput');
+    const voiceBtn = document.getElementById('voiceBtn');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const notifPermBtn = document.getElementById('notifPermBtn');
+    const testAlertBtn = document.getElementById('testAlertBtn');
+    const syncStatus = document.getElementById('syncStatus');
+    const alertStatus = document.getElementById('alertStatus');
+
+    const editModal = document.getElementById('editModal');
+    const editTitleInput = document.getElementById('editTitleInput');
+    const editDateInput = document.getElementById('editDateInput');
+    const editTimeInput = document.getElementById('editTimeInput');
+    const editCatSelect = document.getElementById('editCatSelect');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const saveEditBtn = document.getElementById('saveEditBtn');
+
+    const inAppAlert = document.getElementById('inAppAlert');
+    const alertBadge = document.getElementById('alertBadge');
+    const alertTaskTitle = document.getElementById('alertTaskTitle');
+    const alertTaskTime = document.getElementById('alertTaskTime');
+    const closeAlertBtn = document.getElementById('closeAlertBtn');
+
+    function saveTasks() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      } catch {
+        // Ignorar si el almacenamiento local está bloqueado
+      }
+      syncStatus.textContent = '📱 Local';
+      syncStatus.classList.remove('synced');
+      syncStatus.classList.add('local');
+    }
+
+    function updateAlertBadge() {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        alertStatus.textContent = '🔔 Avisos listos';
+        notifPermBtn.classList.add('active-alert');
+      } else {
+        alertStatus.textContent = '🔕 Al entrar';
+        notifPermBtn.classList.remove('active-alert');
+      }
+    }
+
+    function applySavedTheme() {
+      const saved = localStorage.getItem(THEME_KEY) || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      themeToggleBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
+    }
+
+    themeToggleBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem(THEME_KEY, next);
+      themeToggleBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+
+    notifPermBtn.addEventListener('click', async () => {
+      if (!('Notification' in window)) {
+        updateAlertBadge();
+        return;
+      }
+      if (Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch {
+          // Ignorar rechazo
+        }
+      }
+      updateAlertBadge();
+    });
+
+    function triggerTaskReminder(task, badgeLabel = '📌 Toca empezar') {
+      alertBadge.textContent = badgeLabel;
+      alertTaskTitle.textContent = task.title || 'Tarea programada';
+      alertTaskTime.textContent = `${task.date || ''} ${task.time || ''}`.trim();
+      inAppAlert.classList.remove('hidden');
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(badgeLabel, {
+            body: `${task.title}${task.time ? ` · ${task.time}` : ''}`
+          });
+        } catch {
+          // Si el navegador bloquea Notification constructor, queda el banner en pantalla
+        }
+      }
+    }
+
+    closeAlertBtn.addEventListener('click', () => {
+      inAppAlert.classList.add('hidden');
+    });
+
+    testAlertBtn.addEventListener('click', () => {
+      const nextTask = tasks.find((t) => !t.completed && t.date === selectedDateStr) || {
+        title: 'Revisión de enfoque diario',
+        date: selectedDateStr,
+        time: new Date().toTimeString().slice(0, 5)
+      };
+      triggerTaskReminder(nextTask, '⚡ Prueba de alerta');
+    });
+
+    function renderDaysStrip() {
+      daysStrip.innerHTML = '';
+      const today = new Date();
+      const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+      for (let i = 0; i < 14; i++) {
+        const dt = new Date(today);
+        dt.setDate(today.getDate() + i);
+        const dateStr = getLocalDateStr(dt);
+
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = `day-pill ${dateStr === selectedDateStr ? 'active' : ''}`;
+
+        let label = dayNames[dt.getDay()];
+        if (i === 0) label = 'Hoy';
+        if (i === 1) label = 'Mañana';
+
+        pill.innerHTML = `
+          <span class="day-name">${label}</span>
+          <span class="day-num">${dt.getDate()}</span>
+        `;
+
+        pill.addEventListener('click', () => {
+          selectedDateStr = dateStr;
+          renderDaysStrip();
+          renderTimeline();
+          updateParsePreview();
+        });
+
+        daysStrip.appendChild(pill);
+      }
+
+      const [y, m, d] = selectedDateStr.split('-').map(Number);
+      const selObj = new Date(y, m - 1, d);
+      currentDateLabel.textContent = selObj.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+    }
+
+    function parseSmartInput(rawText) {
+      let text = String(rawText || '').trim();
+      const now = new Date();
+      const todayStr = getLocalDateStr(now);
+      let targetDate = selectedDateStr;
+      let time = manualTimeInput.value || '';
+      let category = selectedCategory;
+
+      if (/#trabajo|\btrabajo\b|\bproyecto\b|\breunión\b|\breunion\b|\bturno\b/i.test(text)) {
+        category = 'trabajo';
+        text = text.replace(/#trabajo/gi, '').trim();
+      } else if (/#estudio|\bestudiar\b|\bexamen\b|\btarea\b|\bclase\b|\bcálculo\b|\bcalculo\b/i.test(text)) {
+        category = 'estudio';
+        text = text.replace(/#estudio/gi, '').trim();
+      } else if (/#personal|\bgym\b|\bcita\b|\bmédico\b|\bmedico\b|\bcomprar\b/i.test(text)) {
+        category = 'personal';
+        text = text.replace(/#personal/gi, '').trim();
+      }
+
+      const relMatch = text.match(/\ben\s+(\d+)\s*(horas?|hrs?|minutos?|mins?)\b/i);
+      if (relMatch) {
+        const amount = parseInt(relMatch[1], 10);
+        const unit = relMatch[2].toLowerCase();
+        const future = new Date(now.getTime() + amount * (unit.startsWith('h') ? 3600000 : 60000));
+        targetDate = getLocalDateStr(future);
+        time = `${String(future.getHours()).padStart(2, '0')}:${String(future.getMinutes()).padStart(2, '0')}`;
+        text = text.replace(relMatch[0], '').trim();
+      }
+
+      if (/\bpasado\s+mañana\b/i.test(text)) {
+        targetDate = addDays(todayStr, 2);
+        text = text.replace(/\bpasado\s+mañana\b/gi, '').trim();
+      } else if (/\bmañana\b/i.test(text)) {
+        targetDate = addDays(todayStr, 1);
+        text = text.replace(/\bmañana\b/gi, '').trim();
+      } else if (/\bhoy\b/i.test(text)) {
+        targetDate = todayStr;
+        text = text.replace(/\bhoy\b/gi, '').trim();
+      }
+
+      const dayMap = {
+        domingo: 0, dom: 0,
+        lunes: 1, lun: 1,
+        martes: 2, mar: 2,
+        miercoles: 3, miércoles: 3, mie: 3, mié: 3,
+        jueves: 4, jue: 4,
+        viernes: 5, vie: 5,
+        sabado: 6, sábado: 6, sab: 6, sáb: 6
+      };
+
+      const weekdayRegex = /\b(?:el\s+)?(?:pr[oó]ximo\s+)?(domingo|dom|lunes|lun|martes|mar|mi[eé]rcoles|mi[eé]|jueves|jue|viernes|vie|s[aá]bado|s[aá]b)\b/i;
+      const dayMatch = text.match(weekdayRegex);
+      if (dayMatch) {
+        const key = dayMatch[1].toLowerCase();
+        const targetDow = dayMap[key];
+        if (typeof targetDow === 'number') {
+          let diff = (targetDow - now.getDay() + 7) % 7;
+          if (diff === 0) diff = 7;
+          if (/pr[oó]ximo/i.test(dayMatch[0]) && diff <= 2) diff += 7;
+          targetDate = addDays(todayStr, diff);
+          text = text.replace(dayMatch[0], '').trim();
+        }
+      }
+
+      if (!time && /\bmediod[ií]a\b/i.test(text)) {
+        time = '12:00';
+        text = text.replace(/\b(?:al\s+)?mediod[ií]a\b/gi, '').trim();
+      } else if (!time && /\bmedianoche\b/i.test(text)) {
+        time = '00:00';
+        text = text.replace(/\b(?:a\s+la\s+)?medianoche\b/gi, '').trim();
+      }
+
+      if (!time) {
+        const timeRegex = /\b(?:a\s+las\s+)?(\d{1,2})(?::(\d{2})|\s+y\s+media|\s+y\s+cuarto)?\s*(am|pm|a\.m\.|p\.m\.|(?:de\s+la\s+)?(?:mañana|tarde|noche))?\b/i;
+        const match = text.match(timeRegex);
+
+        if (match) {
+          let hours = parseInt(match[1], 10);
+          let minutes = 0;
+          if (match[2]) minutes = parseInt(match[2], 10);
+          else if (/y\s+media/i.test(match[0])) minutes = 30;
+          else if (/y\s+cuarto/i.test(match[0])) minutes = 15;
+
+          const extra = (match[3] || '').toLowerCase().replace(/\./g, '');
+          const hasExplicitTimeMarker = /a\s+las|:/i.test(match[0]) || Boolean(extra);
+
+          if (hasExplicitTimeMarker && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+            const isPM = extra.includes('pm') || extra.includes('tarde') || extra.includes('noche');
+            const isAM = extra.includes('am') || extra.includes('mañana');
+
+            if (isPM && hours < 12) hours += 12;
+            if (isAM && hours === 12) hours = 0;
+
+            time = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+            text = text.replace(match[0], '').trim();
+          }
+        }
+      }
+
+      let cleanTitle = text
+        .replace(/\b(?:recordarme|recordar|avísame|avisame|para\s+el|para\s+la|para|el|la|en)\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleanTitle) cleanTitle = rawText.trim();
+      cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+
+      return {
+        title: cleanTitle,
+        date: targetDate,
+        time,
+        category
+      };
+    }
+
+    function updateParsePreview() {
+      const val = taskInput.value.trim();
+      if (!val) {
+        parsePreview.textContent = '';
+        return;
+      }
+      const p = parseSmartInput(val);
+      parsePreview.textContent = `↳ "${p.title}" · ${p.date}${p.time ? ` · ${p.time}` : ''} · ${p.category}`;
+    }
+
+    taskInput.addEventListener('input', updateParsePreview);
+    manualTimeInput.addEventListener('change', updateParsePreview);
+
+    document.querySelectorAll('.chip[data-cat]').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip[data-cat]').forEach((c) => c.classList.remove('active'));
+        chip.classList.add('active');
+        selectedCategory = chip.dataset.cat;
+        updateParsePreview();
+      });
+    });
+
+    taskForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const raw = taskInput.value.trim();
+      if (!raw) return;
+
+      const parsed = parseSmartInput(raw);
+      const newTask = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        title: parsed.title,
+        date: parsed.date,
+        time: parsed.time,
+        category: parsed.category,
+        completed: false
+      };
+
+      tasks.unshift(newTask);
+      saveTasks();
+
+      if (parsed.date !== selectedDateStr) {
+        selectedDateStr = parsed.date;
+        renderDaysStrip();
+      }
+      renderTimeline();
+
+      taskInput.value = '';
+      manualTimeInput.value = '';
+      parsePreview.textContent = '';
+      checkDueTasks(true);
+    });
+
+    function renderTimeline() {
+      const dayTasks = tasks
+        .filter((t) => t.date === selectedDateStr)
+        .sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1;
+          if (!a.time && !b.time) return 0;
+          if (!a.time) return 1;
+          if (!b.time) return -1;
+          return a.time.localeCompare(b.time);
+        });
+
+      const total = dayTasks.length;
+      const done = dayTasks.filter((t) => t.completed).length;
+      const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+
+      progressText.textContent = `${done} de ${total} completadas`;
+      progressPercent.textContent = `${pct}%`;
+      progressFill.style.width = `${pct}%`;
+
+      if (total === 0) {
+        timelineContainer.innerHTML = `
+          <div class="empty-state">
+            <span>✨</span>
+            <p>Sin tareas para este día. Escribe o dicta algo abajo.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const catLabels = {
+        estudio: '🔵 Estudio',
+        trabajo: '🟣 Trabajo',
+        personal: '🟢 Personal'
+      };
+
+      timelineContainer.innerHTML = dayTasks
+        .map((t) => `
+          <div class="task-card ${t.completed ? 'completed' : ''}" data-cat="${escapeHtml(t.category || 'estudio')}" data-id="${escapeHtml(t.id)}">
+            <button type="button" class="check-circle" data-action="toggle" aria-label="Completar">
+              ${t.completed ? '✓' : ''}
+            </button>
+            <div class="task-body">
+              <div class="task-meta">
+                ${t.time ? `<span class="task-time">${escapeHtml(t.time)}</span>` : ''}
+                <span>${catLabels[t.category] || '🔵 Estudio'}</span>
+              </div>
+              <div class="task-title">${escapeHtml(t.title)}</div>
+            </div>
+            <div class="task-actions">
+              <button type="button" class="mini-btn" data-action="edit">Editar</button>
+              <button type="button" class="mini-btn" data-action="delete">✕</button>
+            </div>
+          </div>
+        `)
+        .join('');
+    }
+
+    function openEditModal(task) {
+      editingTaskId = task.id;
+      editTitleInput.value = task.title || '';
+      editDateInput.value = task.date || selectedDateStr;
+      editTimeInput.value = task.time || '';
+      editCatSelect.value = task.category || 'estudio';
+      editModal.classList.remove('hidden');
+      editTitleInput.focus();
+    }
+
+    function closeEditModal() {
+      editingTaskId = null;
+      editModal.classList.add('hidden');
+    }
+
+    cancelEditBtn.addEventListener('click', closeEditModal);
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) closeEditModal();
+    });
+
+    saveEditBtn.addEventListener('click', () => {
+      if (!editingTaskId) return;
+      const title = editTitleInput.value.trim();
+      if (!title) return;
+
+      const idx = tasks.findIndex((t) => t.id === editingTaskId);
+      if (idx !== -1) {
+        tasks[idx] = {
+          ...tasks[idx],
+          title,
+          date: editDateInput.value || tasks[idx].date,
+          time: editTimeInput.value || '',
+          category: editCatSelect.value || 'estudio'
+        };
+        selectedDateStr = tasks[idx].date;
+        saveTasks();
+        renderDaysStrip();
+        renderTimeline();
+      }
+      closeEditModal();
+    });
+
+    timelineContainer.addEventListener('click', (e) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const actionEl = target.closest('[data-action]');
+      const card = target.closest('.task-card');
+      if (!actionEl || !card) return;
+
+      const id = card.getAttribute('data-id');
+      const action = actionEl.getAttribute('data-action');
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+
+      if (action === 'toggle') {
+        task.completed = !task.completed;
+        saveTasks();
+        renderTimeline();
+      } else if (action === 'edit') {
+        openEditModal(task);
+      } else if (action === 'delete') {
+        tasks = tasks.filter((t) => t.id !== id);
+        alertedTaskIds.delete(id);
+        saveTasks();
+        renderTimeline();
+      }
+    });
+
+    function checkDueTasks(showNewlyDueOnly = false) {
+      const now = new Date();
+      const todayStr = getLocalDateStr(now);
+      const currHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const due = tasks.filter((t) => {
+        if (t.completed || !t.time || !t.date) return false;
+        if (t.date < todayStr) return true;
+        if (t.date === todayStr && t.time <= currHM) return true;
+        return false;
+      });
+
+      if (due.length === 0) return;
+
+      const unseen = due.filter((t) => !alertedTaskIds.has(t.id));
+      unseen.forEach((t) => alertedTaskIds.add(t.id));
+
+      if (unseen.length > 0) {
+        const first = unseen[0];
+        triggerTaskReminder(
+          first,
+          unseen.length > 1 ? `📌 ${unseen.length} pendientes` : '📌 Toca empezar'
+        );
+      } else if (!showNewlyDueOnly && !inAppAlert.classList.contains('hidden')) {
+        // Mantener visible si ya se está mostrando
+      }
+    }
+
+    function startReminderWatcher() {
+      checkDueTasks(false);
+      setInterval(() => {
+        checkDueTasks(false);
+        renderTimeline();
+      }, 20000);
+    }
+
+    function setupVoiceRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        voiceBtn.title = 'Dictado no disponible en este navegador';
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      let recording = false;
+
+      recognition.onstart = () => {
+        recording = true;
+        voiceBtn.classList.add('recording');
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = event.results?.[0]?.[0]?.transcript || '';
+        if (transcript) {
+          taskInput.value = transcript;
+          updateParsePreview();
+        }
+      };
+
+      recognition.onend = () => {
+        recording = false;
+        voiceBtn.classList.remove('recording');
+      };
+
+      recognition.onerror = () => {
+        recording = false;
+        voiceBtn.classList.remove('recording');
+      };
+
+      voiceBtn.addEventListener('click', () => {
+        if (recording) {
+          recognition.stop();
+        } else {
+          try {
+            recognition.start();
+          } catch {
+            // Evitar error si ya está iniciando
+          }
+        }
+      });
+    }
+
+    applySavedTheme();
+    updateAlertBadge();
+    renderDaysStrip();
+    renderTimeline();
+    setupVoiceRecognition();
+    startReminderWatcher();
+  </script>
+</body>
+</html>
